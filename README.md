@@ -115,9 +115,7 @@ load -> split -> embed -> store
 
 Add the deployed API URL here before submission:
 
-```text
-https://your-deployment-url.example.com
-```
+https://vardhan-nestack-submission.onrender.com/docs
 
 ## Submission Notes
 
