@@ -1,0 +1,7 @@
+from pathlib import Path
+
+DEFAULT_PERSIST_DIR = Path("vector_store")
+
+EMBEDDING_DIMENSIONS = 384
+CHUNK_SIZE = 650
+CHUNK_OVERLAP = 100

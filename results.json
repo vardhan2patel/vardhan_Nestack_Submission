@@ -1,0 +1,67 @@
+{
+  "queries": [
+    {
+      "query": "Load split generate embeddings persist",
+      "top_k": 3,
+      "results": [
+        {
+          "chunk_text": "3. Generate embeddings using a LangChain embedding integration (e.g. OpenAIEmbeddings, \nHuggingFaceEmbeddings, CohereEmbeddings). \n4. Persist the embeddings to a LangChain-compatible vector store (e.g. Chroma, FAISS, Pinecone). Use the vector \nstore\u2019s built-in persistence method. \n \nThe script must be runnable as: \npython ingest.py --file document.pdf \n \nLangGraph (optional, rewarded): If you use LangGraph, model the ingestion as a graph with clearly named nodes - for \nexample: load \u2192 split \u2192 embed \u2192 store. Include a printed node list or a diagram in your README. \nPART 2 - RETRIEVAL ENDPOINT",
+          "page_number": 1,
+          "score": 1.5073788166046143
+        },
+        {
+          "chunk_text": "vector store directly using similarity search. There is no LLM call on the retrieval side and no QA or conversational \nchain. Return raw chunk results only. \nPART 1 - INGESTION \nWrite a script using LangChain primitives that performs the following steps in order: \n1. Load the PDF using a LangChain document loader (e.g. PyPDFLoader, PDFMinerLoader, UnstructuredPDFLoader). \n2. Split the loaded document using a LangChain text splitter (e.g. RecursiveCharacterTextSplitter). Choose chunk size \nand overlap thoughtfully - justify both in the README. \n3. Generate embeddings using a LangChain embedding integration (e.g. OpenAIEmbeddings,",
+          "page_number": 1,
+          "score": 1.576090931892395
+        },
+        {
+          "chunk_text": "Technical Assessment - Nestack  \n \n \nDo not share or distribute this document. Page PAGE \nPDF Vectorisation Pipeline \nAssessment - LangChain / LangGraph Implementation \nLanguage Python (required) \nFramework LangChain / LangGraph \n \nOVERVIEW \nBuild a pipeline with two components using LangChain: (1) an ingestion script that loads a PDF using a LangChain \ndocument loader, splits it with a LangChain text splitter, generates embeddings via a LangChain embedding \nintegration, and persists them to a LangChain-compatible vector store; and (2) a retrieval endpoint that queries the",
+          "page_number": 1,
+          "score": 1.796772837638855
+        }
+      ]
+    },
+    {
+      "query": "What should the retrieval endpoint return?",
+      "top_k": 3,
+      "results": [
+        {
+          "chunk_text": "PART 2 - RETRIEVAL ENDPOINT \nExpose a single HTTP endpoint. Embed the incoming query using the same model from ingestion and call \nsimilarity_search_with_score() (or the equivalent method) on the vector store. Return the top-k results directly. \nMethod Endpoint Description \nPOST /query Request body: { \"query\": string, \"top_k\": int }. Response: array of { chunk_text, \npage_number, score }. \n \nDo not wrap retrieval in a RetrievalQA chain, ConversationalRetrievalChain, or any LLM chain. The endpoint must \ncall the vector store\u2019s similarity search method directly and return raw results. \n \nCONSTRAINTS",
+          "page_number": 1,
+          "score": 1.3870558738708496
+        },
+        {
+          "chunk_text": "call the vector store\u2019s similarity search method directly and return raw results. \n \nCONSTRAINTS \n\u2022 Python is required. LangChain core must be used for loading, splitting, embedding, and vector store operations. \n\u2022 LangGraph is optional but will be evaluated positively if the graph is well-structured and documented. \n\u2022 Do not use RetrievalQA, ConversationalRetrievalChain, or any pre-built RAG chain for the retrieval endpoint. \n\u2022 The pipeline must run successfully on the sample PDF provided on the assessment platform. \nDELIVERABLES \n\u2022 Ingestion script and retrieval server, fully runnable from your README instructions.",
+          "page_number": 1,
+          "score": 1.455284833908081
+        },
+        {
+          "chunk_text": "3. Generate embeddings using a LangChain embedding integration (e.g. OpenAIEmbeddings, \nHuggingFaceEmbeddings, CohereEmbeddings). \n4. Persist the embeddings to a LangChain-compatible vector store (e.g. Chroma, FAISS, Pinecone). Use the vector \nstore\u2019s built-in persistence method. \n \nThe script must be runnable as: \npython ingest.py --file document.pdf \n \nLangGraph (optional, rewarded): If you use LangGraph, model the ingestion as a graph with clearly named nodes - for \nexample: load \u2192 split \u2192 embed \u2192 store. Include a printed node list or a diagram in your README. \nPART 2 - RETRIEVAL ENDPOINT",
+          "page_number": 1,
+          "score": 1.5241038799285889
+        }
+      ]
+    },
+    {
+      "query": "Which chains are not allowed?",
+      "top_k": 3,
+      "results": [
+        {
+          "chunk_text": "PART 2 - RETRIEVAL ENDPOINT \nExpose a single HTTP endpoint. Embed the incoming query using the same model from ingestion and call \nsimilarity_search_with_score() (or the equivalent method) on the vector store. Return the top-k results directly. \nMethod Endpoint Description \nPOST /query Request body: { \"query\": string, \"top_k\": int }. Response: array of { chunk_text, \npage_number, score }. \n \nDo not wrap retrieval in a RetrievalQA chain, ConversationalRetrievalChain, or any LLM chain. The endpoint must \ncall the vector store\u2019s similarity search method directly and return raw results. \n \nCONSTRAINTS",
+          "page_number": 1,
+          "score": 1.810687780380249
+        },
+        {
+          "chunk_text": "Technical Assessment - Nestack \nDo not share or distribute this document. Page PAGE \nEVALUATION \nCriterion Weight What we look for \nPipeline runs end-to-end without errors 35% Ingestion completes; retrieval returns \nrelevant results. \nCorrect use of LangChain primitives for each stage 25% Right component used for the right \npurpose; no misuse of chains. \nRetrieval quality - relevance of returned chunks 20% results.json entries are semantically \nrelevant to each query. \nREADME quality and component choices with reasoning 15% Can justify each LangChain component \nselected.",
+          "page_number": 2,
+          "score": 1.8203017711639404
+        },
+        {
+          "chunk_text": "call the vector store\u2019s similarity search method directly and return raw results. \n \nCONSTRAINTS \n\u2022 Python is required. LangChain core must be used for loading, splitting, embedding, and vector store operations. \n\u2022 LangGraph is optional but will be evaluated positively if the graph is well-structured and documented. \n\u2022 Do not use RetrievalQA, ConversationalRetrievalChain, or any pre-built RAG chain for the retrieval endpoint. \n\u2022 The pipeline must run successfully on the sample PDF provided on the assessment platform. \nDELIVERABLES \n\u2022 Ingestion script and retrieval server, fully runnable from your README instructions.",
+          "page_number": 1,
+          "score": 1.8729424476623535
+        }
+      ]
+    }
+  ]
+}
