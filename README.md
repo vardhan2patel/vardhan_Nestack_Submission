@@ -1,6 +1,6 @@
 # PDF Vectorisation Pipeline
 
-Python implementation of the Nestack LangChain vectorisation assessment. The project ingests a PDF into a persisted Chroma vector store and exposes a single retrieval endpoint that returns raw similarity-search chunks.
+Python implementation of the Nestack LangChain vectorisation assessment. The project ingests a PDF, processes it into vector embeddings, stores them in a persisted FAISS vector store, and exposes a retrieval endpoint that returns raw similarity-search chunks.
 
 ## Requirements Covered
 
@@ -29,22 +29,50 @@ Python implementation of the Nestack LangChain vectorisation assessment. The pro
 
 ## Setup
 
+Create a virtual environment:
+
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
 ```
 
-On macOS/Linux, activate with:
+### Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+### macOS/Linux
 
 ```bash
 source .venv/bin/activate
 ```
 
-## Ingest A PDF
+Install the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Ingest a PDF
+
+Run the ingestion pipeline using:
 
 ```bash
 python ingest.py --file document.pdf --show-graph
+```
+
+The ingestion pipeline follows:
+
+```text
+PDF
+ ↓
+Load
+ ↓
+Split
+ ↓
+Embed
+ ↓
+Store
 ```
 
 Expected console output includes:
@@ -58,11 +86,27 @@ Persist directory: .../vector_store
 
 ## Run Retrieval Server
 
+Start the FastAPI server:
+
 ```bash
 uvicorn server:app --reload
 ```
 
-Query the vector store:
+The server will start locally at:
+
+```text
+http://127.0.0.1:8000
+```
+
+Interactive API documentation is available at:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+## Query the Vector Store
+
+Send a POST request to the `/query` endpoint:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/query ^
@@ -70,7 +114,16 @@ curl -X POST http://127.0.0.1:8000/query ^
   -d "{\"query\":\"What should the retrieval endpoint return?\",\"top_k\":3}"
 ```
 
-Response format:
+Example request body:
+
+```json
+{
+  "query": "What are the ingestion steps?",
+  "top_k": 3
+}
+```
+
+## Response Format
 
 ```json
 [
@@ -82,41 +135,138 @@ Response format:
 ]
 ```
 
+The response contains:
+
+- `chunk_text`: The relevant text chunk retrieved from the PDF.
+- `page_number`: The PDF page from which the chunk originated.
+- `score`: The distance/score returned by FAISS for the retrieved result.
+
 ## Component Choices
 
-`PyPDFLoader` is used because the assessment specifically asks for a LangChain PDF document loader, and PyPDFLoader preserves per-page metadata that the API can return as `page_number`.
+### PyPDFLoader
 
-`RecursiveCharacterTextSplitter` is used with `chunk_size=650` and `chunk_overlap=100`. A 650-character chunk keeps requirement paragraphs focused enough for retrieval, while 100 characters of overlap preserves context across chunk boundaries without creating too much duplicate text.
+`PyPDFLoader` is used because the assessment specifically requires a LangChain PDF document loader. It extracts the PDF content while preserving page metadata, allowing the API to return the corresponding `page_number` for each retrieved chunk.
 
-`LocalHashEmbeddings` implements LangChain's `Embeddings` interface and is used because it runs locally, is deterministic, and avoids API keys or model downloads. It converts normalized tokens into a fixed-size hashed vector, which is appropriate for this small assessment PDF and keeps ingestion/retrieval reproducible.
+### RecursiveCharacterTextSplitter
 
-`FAISS` is used because it is LangChain-compatible, persists locally with `save_local()`, reloads with `load_local()`, and supports direct `similarity_search_with_score()` calls. The server calls that method directly and returns raw chunk results.
+`RecursiveCharacterTextSplitter` is used with:
+
+```text
+chunk_size = 650
+chunk_overlap = 100
+```
+
+Large PDF documents are divided into smaller chunks before embedding.
+
+The chunk overlap helps preserve context between consecutive chunks and reduces the possibility of losing information at chunk boundaries.
+
+### LocalHashEmbeddings
+
+`LocalHashEmbeddings` is a custom implementation of LangChain's `Embeddings` interface.
+
+It is used because it:
+
+- Runs completely locally.
+- Does not require API keys.
+- Does not require internet access.
+- Does not require downloading external models.
+- Produces deterministic embeddings for the same input.
+
+The embedding implementation converts normalized text tokens and token bigrams into a fixed-size hashed vector.
+
+For a production-level semantic search system, a pretrained embedding model could be used to provide stronger semantic understanding. The local implementation was chosen to keep this assessment lightweight, reproducible, and self-contained.
+
+### FAISS
+
+`FAISS` is used as the vector store because it:
+
+- Is compatible with LangChain.
+- Supports efficient vector similarity search.
+- Can persist the vector index locally using `save_local()`.
+- Can reload the vector store using `load_local()`.
+- Supports direct `similarity_search_with_score()` calls.
+
+The retrieval server directly performs similarity search and returns the raw matching document chunks without using an LLM or QA chain.
 
 ## LangGraph Flow
+
+The ingestion workflow is implemented using LangGraph.
 
 ```text
 load -> split -> embed -> store
 ```
 
-- `load`: reads the PDF with `PyPDFLoader`.
-- `split`: chunks documents with `RecursiveCharacterTextSplitter`.
-- `embed`: creates the HuggingFace embedding function.
-- `store`: writes chunks and embeddings to persisted Chroma storage.
+- `load`: Reads the PDF using `PyPDFLoader`.
+- `split`: Divides the PDF content into smaller chunks using `RecursiveCharacterTextSplitter`.
+- `embed`: Creates the `LocalHashEmbeddings` implementation used to convert document chunks into vector representations.
+- `store`: Stores the document chunks and their embeddings in a persisted FAISS vector store.
+
+## Retrieval Flow
+
+Once the PDF has been ingested and stored, the retrieval process works as follows:
+
+```text
+User Query
+     ↓
+FastAPI /query Endpoint
+     ↓
+Convert Query into Embedding
+     ↓
+FAISS Similarity Search
+     ↓
+Retrieve Top K Matching Chunks
+     ↓
+Return Chunk Text + Page Number + Score
+```
+
+The same embedding implementation is used for both document chunks and user queries so that they exist in the same vector space for comparison.
+
+## API Validation
+
+The `/query` endpoint uses Pydantic models for request validation.
+
+Example request:
+
+```json
+{
+  "query": "What are embeddings?",
+  "top_k": 3
+}
+```
+
+Validation rules:
+
+- `query` cannot be empty.
+- `top_k` must be between 1 and 20.
+
+Invalid requests automatically return a `422 Validation Error`.
 
 ## Sample Results
 
-`results.json` contains three sample query outputs in the required response format:
+`results.json` contains sample query outputs in the required response format for:
 
 - "What are the ingestion steps?"
 - "What should the retrieval endpoint return?"
 - "Which chains are not allowed?"
 
-## Deployment Link
+## Deployment
 
-Add the deployed API URL here before submission:
+The API is deployed and accessible at:
 
 https://vardhan-nestack-submission.onrender.com/docs
 
+## Key Design Decisions
+
+- The project uses a retrieval-only architecture.
+- No LLM is used.
+- No answer-generation chain is used.
+- No `RetrievalQA` or `ConversationalRetrievalChain` is used.
+- FAISS performs direct vector similarity search.
+- FastAPI exposes the retrieval functionality through a REST API.
+- LangGraph structures the ingestion pipeline into modular processing stages.
+
 ## Submission Notes
 
-Create a private GitHub repository named `{yourName_Nestack_Submission}` and add the required contributors listed in the assessment. Public repositories are disqualified.
+The repository is maintained as a private GitHub repository according to the assessment requirements.
+
+The ingestion pipeline, retrieval endpoint, sample results, and deployment documentation are included in the submission.
